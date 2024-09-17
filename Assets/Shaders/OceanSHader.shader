@@ -4,6 +4,7 @@ Shader "Unlit/OceanSHader"
     {
         _Color ("Color",color) = (1,1,1,1)
         _Normal ("Normal", 2D) = "white" {}
+        _Strength ("Strength", float) = 0
     }
     SubShader
     {
@@ -38,13 +39,20 @@ Shader "Unlit/OceanSHader"
             sampler2D _Normal;
             float4 _Normal_ST;
             float4 _Color;
+            float _Strength;
 
-            v2f vert (appdata v)
+            v2f vert (appdata vEnter)
             {
                 v2f o;
-                o.vertex = UnityObjectToClipPos(v.vertex);
-                o.uv = TRANSFORM_TEX(v.uv, _Normal);
-                o.normal = v.normal.xyz;
+                _Strength = _Strength / 10;
+               float wave = _Time.y + vEnter.vertex.x;
+               float wave1 = _Time.y + vEnter.vertex.z;
+               float4 flagOndulation = float4(0.0,cos(wave) * _Strength,0.0,0.0);
+               float4 flagOndulation1 = float4(0.0,cos(wave1) * _Strength,0.0,0.0);
+               float4 posPosition = vEnter.vertex + flagOndulation * flagOndulation1;
+                o.vertex = UnityObjectToClipPos(posPosition);
+                o.uv = TRANSFORM_TEX(vEnter.uv, _Normal);
+                o.normal = vEnter.normal.xyz;
                 UNITY_TRANSFER_FOG(o,o.vertex);
                 return o;
             }
@@ -54,7 +62,7 @@ Shader "Unlit/OceanSHader"
                 float3 lightDir = _WorldSpaceLightPos0.xyz;
 
                 fixed4 norm = tex2D(_Normal,i.uv + _Time.xx);
-                fixed4 norm2 = tex2D(_Normal,i.uv * 0.9 - _Time.xx);
+                fixed4 norm2 = tex2D(_Normal,i.uv * 0.3 - _Time.xx);
 
                 // apply fog
                 UNITY_APPLY_FOG(i.fogCoord, _Color);
